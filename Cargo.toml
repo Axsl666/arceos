@@ -35,6 +35,7 @@ members = [
     "crates/spinlock",
     "crates/timer_list",
     "crates/tuple_for_each",
+    "crates/brcm_pcie",
 
     "modules/axalloc",
     "modules/axconfig",
@@ -70,6 +71,7 @@ members = [
     "apps/task/yield",
     "apps/task/priority",
     "apps/task/tls",
+    "apps/cli",
 ]
 
 [profile.release]
