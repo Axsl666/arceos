@@ -36,6 +36,7 @@ members = [
     "crates/spinlock",
     "crates/timer_list",
     "crates/tuple_for_each",
+    "crates/driver_i2c",
 
 
     "modules/axalloc",
@@ -73,7 +74,8 @@ members = [
     "apps/task/priority",
     "apps/task/tls",
     "apps/cli",
-    "apps/usb"
+    "apps/usb",
+    "apps/oled"
 ]
 
 

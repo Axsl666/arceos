@@ -1,0 +1,6 @@
+[package]
+name = "arceos-oled"
+version = "0.1.0"
+edition = "2021"
+authors = ["Shenlin Xu <axsl666@foxmail.com>"]
+[dependencies]
