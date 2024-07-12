@@ -44,12 +44,11 @@
 //!     - `log-level-error`, `log-level-warn`, `log-level-info`, `log-level-debug`,
 //!       `log-level-trace`: Keep logging only at the specified level or higher.
 //!
-//! [ArceOS]: https://github.com/rcore-os/arceos
+//! [ArceOS]: https://github.com/arceos-org/arceos
 
 #![cfg_attr(all(not(test), not(doc)), no_std)]
 #![feature(doc_cfg)]
 #![feature(doc_auto_cfg)]
-#![feature(ip_in_core)]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

@@ -1,10 +1,8 @@
 //! POSIX-compatible APIs for [ArceOS] modules
 //!
-//! [ArceOS]: https://github.com/rcore-os/arceos
+//! [ArceOS]: https://github.com/arceos-org/arceos
 
 #![cfg_attr(all(not(test), not(doc)), no_std)]
-#![feature(ip_in_core)]
-#![feature(result_option_inspect)]
 #![feature(doc_cfg)]
 #![feature(doc_auto_cfg)]
 #![allow(clippy::missing_safety_doc)]

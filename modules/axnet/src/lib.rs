@@ -1,4 +1,4 @@
-//! [ArceOS](https://github.com/rcore-os/arceos) network module.
+//! [ArceOS](https://github.com/arceos-org/arceos) network module.
 //!
 //! It provides unified networking primitives for TCP/UDP communication
 //! using various underlying network stacks. Currently, only [smoltcp] is
@@ -18,7 +18,6 @@
 //! [smoltcp]: https://github.com/smoltcp-rs/smoltcp
 
 #![no_std]
-#![feature(ip_in_core)]
 #![feature(new_uninit)]
 
 #[macro_use]
