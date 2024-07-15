@@ -1,6 +1,5 @@
+#![no_std]
 
-//         }
-//     }
-// }
-
-pub type Result<T = ()> = core::result::Result<T, Error>;
+mod hal;
+mod time;
+// pub type Result<T = ()> = core::result::Result<T, Error>;
