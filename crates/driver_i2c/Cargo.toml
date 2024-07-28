@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 log = "0.4"
 embedded-hal = "1.0.0"
+tock-registers = "0.9"
