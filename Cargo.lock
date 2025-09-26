@@ -716,8 +716,7 @@ dependencies = [
 [[package]]
 name = "axplat-loongarch64-qemu-virt"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c404064c74824b2c509e1d84f2ae0cbd9240a3274fb4053dc81b9ad120b5962"
+source = "git+https://github.com/Starry-OS/axplat_crates.git?branch=feat%2Fla64-dmw#f329c4e7cb7a2e82b1a185aa637084fe66f65858"
 dependencies = [
  "axconfig-macros",
  "axcpu",

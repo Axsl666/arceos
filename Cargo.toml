@@ -96,3 +96,4 @@ spin = "0.10"
 [patch.crates-io]
 axbacktrace = { git = "https://github.com/Starry-OS/axbacktrace.git" }
 axcpu = { git = "https://github.com/Starry-OS/axcpu.git" }
+axplat-loongarch64-qemu-virt = { git = "https://github.com/Starry-OS/axplat_crates.git", branch = "feat/la64-dmw" }
