@@ -1,12 +1,18 @@
 use alloc::{boxed::Box, string::String, sync::Arc};
-use core::cell::Cell;
-use core::ops::Deref;
-use core::sync::atomic::{AtomicBool, AtomicI32, AtomicU8, AtomicU32, AtomicU64, Ordering};
-use core::{alloc::Layout, cell::UnsafeCell, fmt, ptr::NonNull};
+use core::{
+    alloc::Layout,
+    cell::{Cell, UnsafeCell},
+    fmt,
+    ops::Deref,
+    ptr::NonNull,
+    sync::atomic::{AtomicBool, AtomicI32, AtomicU8, AtomicU32, AtomicU64, Ordering},
+    task::Poll,
+};
 
 #[cfg(feature = "preempt")]
 use core::sync::atomic::AtomicUsize;
 
+use futures_util::{future::poll_fn, task::AtomicWaker};
 use kspin::SpinNoIrq;
 use memory_addr::{VirtAddr, align_up_4k};
 
@@ -14,7 +20,7 @@ use axhal::context::TaskContext;
 #[cfg(feature = "tls")]
 use axhal::tls::TlsArea;
 
-use crate::{AxCpuMask, AxTask, AxTaskRef, WaitQueue};
+use crate::{AxCpuMask, AxTask, AxTaskRef, future::block_on};
 
 /// A unique identifier for a thread.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -78,7 +84,7 @@ pub struct TaskInner {
     preempt_disable_count: AtomicUsize,
 
     exit_code: AtomicI32,
-    wait_for_exit: WaitQueue,
+    wait_for_exit: AtomicWaker,
 
     kstack: Option<TaskStack>,
     ctx: UnsafeCell<TaskContext>,
@@ -166,9 +172,13 @@ impl TaskInner {
     ///
     /// It will return immediately if the task has already exited (but not dropped).
     pub fn join(&self) -> Option<i32> {
-        self.wait_for_exit
-            .wait_until(|| self.state() == TaskState::Exited);
-        Some(self.exit_code.load(Ordering::Acquire))
+        block_on(poll_fn(|cx| {
+            if self.state() == TaskState::Exited {
+                return Poll::Ready(Some(self.exit_code.load(Ordering::Acquire)));
+            }
+            self.wait_for_exit.register(cx.waker());
+            Poll::Pending
+        }))
     }
 
     /// Returns a reference to the task extended data.
@@ -245,7 +255,7 @@ impl TaskInner {
             #[cfg(feature = "preempt")]
             preempt_disable_count: AtomicUsize::new(0),
             exit_code: AtomicI32::new(0),
-            wait_for_exit: WaitQueue::new(),
+            wait_for_exit: AtomicWaker::new(),
             kstack: None,
             ctx: UnsafeCell::new(TaskContext::new()),
             #[cfg(feature = "task-ext")]
@@ -379,7 +389,7 @@ impl TaskInner {
     pub(crate) fn notify_exit(&self, exit_code: i32) {
         self.set_state(TaskState::Exited);
         self.exit_code.store(exit_code, Ordering::Release);
-        self.wait_for_exit.notify_all(false);
+        self.wait_for_exit.wake();
     }
 
     #[inline]

@@ -1,11 +1,15 @@
 use alloc::collections::VecDeque;
 use alloc::sync::Arc;
-use core::mem::MaybeUninit;
+use core::{
+    mem::MaybeUninit,
+    task::{Context, Poll},
+};
 
 #[cfg(feature = "smp")]
 use alloc::sync::Weak;
 
 use axsched::BaseScheduler;
+use futures_util::{future::poll_fn, task::AtomicWaker};
 use kernel_guard::BaseGuard;
 use kspin::SpinRaw;
 use lazyinit::LazyInit;
@@ -13,7 +17,8 @@ use lazyinit::LazyInit;
 use axhal::percpu::this_cpu_id;
 
 use crate::{
-    AxCpuMask, AxTaskRef, Scheduler, TaskInner, WaitQueue,
+    AxCpuMask, AxTaskRef, Scheduler, TaskInner,
+    future::block_on,
     task::{CurrentTask, TaskState},
 };
 
@@ -33,7 +38,7 @@ macro_rules! percpu_static {
 percpu_static! {
     RUN_QUEUE: LazyInit<AxRunQueue> = LazyInit::new(),
     EXITED_TASKS: VecDeque<AxTaskRef> = VecDeque::new(),
-    WAIT_FOR_EXIT: WaitQueue = WaitQueue::new(),
+    WAIT_FOR_EXIT: AtomicWaker = AtomicWaker::new(),
     IDLE_TASK: LazyInit<AxTaskRef> = LazyInit::new(),
     /// Stores the weak reference to the previous task that is running on this CPU.
     #[cfg(feature = "smp")]
@@ -377,7 +382,7 @@ impl<G: BaseGuard> CurrentRunQueueRef<'_, G> {
                     .current_ref_mut_raw()
                     .push_back((*curr).clone());
                 // Wake up the GC task to drop the exited tasks.
-                WAIT_FOR_EXIT.current_ref_mut_raw().notify_one(false);
+                WAIT_FOR_EXIT.current_ref_mut_raw().wake();
             }
 
             // Schedule to next task.
@@ -431,7 +436,12 @@ impl AxRunQueue {
     /// Create a new run queue for the specified CPU.
     /// The run queue is initialized with a per-CPU gc task in its scheduler.
     fn new(cpu_id: usize) -> Self {
-        let gc_task = TaskInner::new(gc_entry, "gc".into(), axconfig::TASK_STACK_SIZE).into_arc();
+        let gc_task = TaskInner::new(
+            || block_on(poll_fn(poll_gc)),
+            "gc".into(),
+            axconfig::TASK_STACK_SIZE,
+        )
+        .into_arc();
         // gc task should be pinned to the current CPU.
         gc_task.set_cpumask(AxCpuMask::one_shot(cpu_id));
 
@@ -559,18 +569,22 @@ impl AxRunQueue {
     }
 }
 
-fn gc_entry() {
+fn poll_gc(cx: &mut Context<'_>) -> Poll<()> {
     loop {
         // Drop all exited tasks and recycle resources.
         let n = EXITED_TASKS.with_current(|exited_tasks| exited_tasks.len());
         for _ in 0..n {
             // Do not do the slow drops in the critical section.
-            let task = EXITED_TASKS.with_current(|exited_tasks| exited_tasks.pop_front());
-            if let Some(task) = task {
-                if Arc::strong_count(&task) == 1 {
+            let Some(task) = EXITED_TASKS.with_current(|exited_tasks| exited_tasks.pop_front())
+            else {
+                continue;
+            };
+            match Arc::try_unwrap(task) {
+                Ok(task) => {
                     // If I'm the last holder of the task, drop it immediately.
                     drop(task);
-                } else {
+                }
+                Err(task) => {
                     // Otherwise (e.g, `switch_to` is not compeleted, held by the
                     // joiner, etc), push it back and wait for them to drop first.
                     EXITED_TASKS.with_current(|exited_tasks| exited_tasks.push_back(task));
@@ -580,8 +594,18 @@ fn gc_entry() {
         // Note: we cannot block current task with preemption disabled,
         // use `current_ref_raw` to get the `WAIT_FOR_EXIT`'s reference here to avoid the use of `NoPreemptGuard`.
         // Since gc task is pinned to the current CPU, there is no affection if the gc task is preempted during the process.
-        unsafe { WAIT_FOR_EXIT.current_ref_raw() }.wait();
+        unsafe { WAIT_FOR_EXIT.current_ref_raw() }.register(cx.waker());
+
+        // New tasks might be added during the above section, recheck it to
+        // prevent us from sleeping indefinitely.
+        if EXITED_TASKS.with_current(|exited_tasks| exited_tasks.is_empty()) {
+            break;
+        }
+
+        crate::yield_now();
     }
+
+    Poll::Pending
 }
 
 /// The task routine for migrating the current task to the correct CPU.
