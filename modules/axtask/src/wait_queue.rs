@@ -49,26 +49,13 @@ impl WaitQueue {
     }
 
     /// Cancel events by removing the task from the wait queue.
-    /// If `from_timer_list` is true, try to remove the task from the timer list.
-    fn cancel_events(&self, curr: CurrentTask, _from_timer_list: bool) {
+    fn cancel_events(&self, curr: CurrentTask) {
         // A task can be wake up only one events (timer or `notify()`), remove
         // the event from another queue.
         if curr.in_wait_queue() {
             // wake up by timer (timeout).
             self.queue.lock().retain(|t| !curr.ptr_eq(t));
             curr.set_in_wait_queue(false);
-        }
-
-        // Try to cancel a timer event from timer lists.
-        // Just mark task's current timer ticket ID as expired.
-        #[cfg(feature = "irq")]
-        if _from_timer_list {
-            curr.timer_ticket_expired();
-            // Note:
-            //  this task is still not removed from timer list of target CPU,
-            //  which may cause some redundant timer events because it still needs to
-            //  go through the process of expiring an event from the timer list and invoking the callback.
-            //  (it can be considered a lazy-removal strategy, it will be ignored when it is about to take effect.)
         }
     }
 
@@ -81,7 +68,7 @@ impl WaitQueue {
             curr.set_in_wait_queue(true);
             wq.push_back(curr)
         });
-        self.cancel_events(crate::current(), false);
+        self.cancel_events(crate::current());
     }
 
     /// Blocks the current task and put it into the wait queue, until the given
@@ -106,7 +93,7 @@ impl WaitQueue {
             });
             // Preemption may occur here.
         }
-        self.cancel_events(curr, false);
+        self.cancel_events(curr);
     }
 
     /// Blocks the current task and put it into the wait queue, until other tasks
@@ -121,7 +108,7 @@ impl WaitQueue {
             curr.id_name(),
             deadline
         );
-        crate::timers::set_alarm_wakeup(deadline, &curr);
+        let key = crate::timers::set_timer(deadline, &curr);
 
         let mut wq = self.queue.lock();
         rq.blocked_resched(move |curr| {
@@ -132,7 +119,11 @@ impl WaitQueue {
         let timeout = curr.in_wait_queue(); // still in the wait queue, must have timed out
 
         // Always try to remove the task from the timer list.
-        self.cancel_events(curr, true);
+        self.cancel_events(curr);
+        // Try to cancel a timer event from timer lists.
+        if let Some(key) = key {
+            crate::timers::cancel_timer(&key);
+        }
         timeout
     }
 
@@ -153,7 +144,7 @@ impl WaitQueue {
             curr.id_name(),
             deadline
         );
-        crate::timers::set_alarm_wakeup(deadline, &curr);
+        let key = crate::timers::set_timer(deadline, &curr);
 
         let mut timeout = true;
         loop {
@@ -174,7 +165,11 @@ impl WaitQueue {
             // Preemption may occur here.
         }
         // Always try to remove the task from the timer list.
-        self.cancel_events(curr, true);
+        self.cancel_events(curr);
+        // Try to cancel a timer event from timer lists.
+        if let Some(key) = key {
+            crate::timers::cancel_timer(&key);
+        }
         timeout
     }
 

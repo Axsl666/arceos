@@ -72,12 +72,6 @@ pub struct TaskInner {
     #[cfg(feature = "smp")]
     on_cpu: AtomicBool,
 
-    /// A ticket ID used to identify the timer event.
-    /// Set by `set_timer_ticket()` when creating a timer event in `set_alarm_wakeup()`,
-    /// expired by setting it as zero in `timer_ticket_expired()`, which is called by `cancel_events()`.
-    #[cfg(feature = "irq")]
-    timer_ticket_id: AtomicU64,
-
     #[cfg(feature = "preempt")]
     need_resched: AtomicBool,
     #[cfg(feature = "preempt")]
@@ -243,8 +237,6 @@ impl TaskInner {
             // By default, the task is allowed to run on all CPUs.
             cpumask: SpinNoIrq::new(AxCpuMask::full()),
             in_wait_queue: AtomicBool::new(false),
-            #[cfg(feature = "irq")]
-            timer_ticket_id: AtomicU64::new(0),
             cpu_id: AtomicU32::new(0),
             #[cfg(feature = "smp")]
             on_cpu: AtomicBool::new(false),
@@ -340,32 +332,6 @@ impl TaskInner {
     #[inline]
     pub(crate) fn set_in_wait_queue(&self, in_wait_queue: bool) {
         self.in_wait_queue.store(in_wait_queue, Ordering::Release);
-    }
-
-    /// Returns task's current timer ticket ID.
-    #[inline]
-    #[cfg(feature = "irq")]
-    pub(crate) fn timer_ticket(&self) -> u64 {
-        self.timer_ticket_id.load(Ordering::Acquire)
-    }
-
-    /// Set the timer ticket ID.
-    #[inline]
-    #[cfg(feature = "irq")]
-    pub(crate) fn set_timer_ticket(&self, timer_ticket_id: u64) {
-        // CAN NOT set timer_ticket_id to 0,
-        // because 0 is used to indicate the timer event is expired.
-        assert!(timer_ticket_id != 0);
-        self.timer_ticket_id
-            .store(timer_ticket_id, Ordering::Release);
-    }
-
-    /// Expire timer ticket ID by setting it to 0,
-    /// it can be used to identify one timer event is triggered or expired.
-    #[inline]
-    #[cfg(feature = "irq")]
-    pub(crate) fn timer_ticket_expired(&self) {
-        self.timer_ticket_id.store(0, Ordering::Release);
     }
 
     #[inline]

@@ -86,8 +86,6 @@ pub fn init_scheduler() {
     info!("Initialize scheduling...");
 
     crate::run_queue::init();
-    #[cfg(feature = "irq")]
-    crate::timers::init();
 
     info!("  use {} scheduler.", Scheduler::scheduler_name());
 }
@@ -95,8 +93,6 @@ pub fn init_scheduler() {
 /// Initializes the task scheduler for secondary CPUs.
 pub fn init_scheduler_secondary() {
     crate::run_queue::init_secondary();
-    #[cfg(feature = "irq")]
-    crate::timers::init();
 }
 
 /// Handles periodic timer ticks for the task manager.

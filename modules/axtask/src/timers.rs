@@ -2,13 +2,12 @@ use alloc::{boxed::Box, vec::Vec};
 use core::sync::atomic::{AtomicU64, Ordering};
 
 use kernel_guard::{NoOp, NoPreemptIrqSave};
-use kspin::SpinRaw;
-use lazyinit::LazyInit;
-use timer_list::{TimeValue, TimerEvent, TimerList};
+use kspin::{SpinNoIrq, SpinRaw};
+use weak_map::WeakMap;
 
-use axhal::time::wall_time;
+use axhal::time::{TimeValue, wall_time};
 
-use crate::{AxTaskRef, select_run_queue};
+use crate::{AxTaskRef, WeakAxTaskRef, select_run_queue};
 
 type TimerCb = Box<dyn Fn(TimeValue) + Send + Sync>;
 
@@ -23,45 +22,34 @@ where
     TIMER_CALLBACKS.lock().push(Box::new(callback));
 }
 
-static TIMER_TICKET_ID: AtomicU64 = AtomicU64::new(1);
+static TIMER_KEY: AtomicU64 = AtomicU64::new(0);
 
-percpu_static! {
-    TIMER_LIST: LazyInit<TimerList<TaskWakeupEvent>> = LazyInit::new(),
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct TimerKey {
+    deadline: TimeValue,
+    key: u64,
 }
 
-struct TaskWakeupEvent {
-    ticket_id: u64,
-    task: AxTaskRef,
-}
+static TIMER_WHEEL: SpinNoIrq<WeakMap<TimerKey, WeakAxTaskRef>> = SpinNoIrq::new(WeakMap::new());
 
-impl TimerEvent for TaskWakeupEvent {
-    fn callback(self, _now: TimeValue) {
-        // Ignore the timer event if timeout was set but not triggered
-        // (wake up by `WaitQueue::notify()`).
-        // Judge if this timer event is still valid by checking the ticket ID.
-        if self.task.timer_ticket() != self.ticket_id {
-            // Timer ticket ID is not matched.
-            // Just ignore this timer event and return.
-            return;
-        }
-
-        // Timer ticket match.
-        select_run_queue::<NoOp>(&self.task).unblock_task(self.task, true)
+pub(crate) fn set_timer(deadline: TimeValue, task: &AxTaskRef) -> Option<TimerKey> {
+    if deadline <= wall_time() {
+        return None;
     }
+
+    let mut wheel = TIMER_WHEEL.lock();
+    let key = TimerKey {
+        deadline,
+        key: TIMER_KEY.fetch_add(1, Ordering::AcqRel),
+    };
+    wheel.insert(key, task);
+
+    Some(key)
 }
 
-pub fn set_alarm_wakeup(deadline: TimeValue, task: &AxTaskRef) {
-    TIMER_LIST.with_current(|timer_list| {
-        let ticket_id = TIMER_TICKET_ID.fetch_add(1, Ordering::AcqRel);
-        task.set_timer_ticket(ticket_id);
-        timer_list.set(
-            deadline,
-            TaskWakeupEvent {
-                ticket_id,
-                task: task.clone(),
-            },
-        );
-    })
+pub(crate) fn cancel_timer(key: &TimerKey) {
+    let mut wheel = TIMER_WHEEL.lock();
+    wheel.remove(key);
 }
 
 pub fn check_events() {
@@ -69,23 +57,15 @@ pub fn check_events() {
         callback(wall_time());
     }
 
-    loop {
-        let now = wall_time();
-        let event = unsafe {
-            // Safety: IRQs are disabled at this time.
-            TIMER_LIST.current_ref_mut_raw()
-        }
-        .expire_one(now);
-        if let Some((_deadline, event)) = event {
-            event.callback(now);
+    let mut wheel = TIMER_WHEEL.lock();
+    for (key, maybe_task) in &mut *wheel {
+        if key.deadline <= wall_time() {
+            if let Some(task) = maybe_task.upgrade() {
+                select_run_queue::<NoOp>(&task).unblock_task(task, true);
+                core::mem::take(maybe_task);
+            }
         } else {
             break;
         }
     }
-}
-
-pub fn init() {
-    TIMER_LIST.with_current(|timer_list| {
-        timer_list.init_once(TimerList::new());
-    });
 }

@@ -426,12 +426,12 @@ impl<G: BaseGuard> CurrentRunQueueRef<'_, G> {
         assert!(curr.is_running());
         assert!(!curr.is_idle());
 
-        let now = axhal::time::wall_time();
-        if now < deadline {
-            crate::timers::set_alarm_wakeup(deadline, curr);
-            curr.set_state(TaskState::Blocked);
-            self.inner.resched();
-        }
+        let Some(_key) = crate::timers::set_timer(deadline, curr) else {
+            return;
+        };
+        curr.set_state(TaskState::Blocked);
+        let _curr = (*curr).clone();
+        self.inner.resched();
     }
 
     pub fn set_current_priority(&mut self, prio: isize) -> bool {
