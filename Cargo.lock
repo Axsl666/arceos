@@ -437,8 +437,7 @@ dependencies = [
 [[package]]
 name = "axerrno"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66ccd41dd4ef364e2385901a5c2a3adea974a41eccb2529c1f24e4c8bc93d834"
+source = "git+https://github.com/Starry-OS/axerrno.git#3713143115fac57d6a15f5390c7af03553c5c7ad"
 dependencies = [
  "log",
 ]

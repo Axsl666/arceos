@@ -137,7 +137,7 @@ impl TcpSocket {
                                 ax_err!(ConnectionRefused, "socket connect() failed")
                             }
                         })?;
-                    Ok((
+                    AxResult::Ok((
                         socket.local_endpoint().unwrap(),
                         socket.remote_endpoint().unwrap(),
                     ))
@@ -559,5 +559,5 @@ fn get_ephemeral_port() -> AxResult<u16> {
         }
         tries += 1;
     }
-    ax_err!(AddrInUse, "no avaliable ports!")
+    ax_err!(AddressInUse, "no avaliable ports!")
 }
