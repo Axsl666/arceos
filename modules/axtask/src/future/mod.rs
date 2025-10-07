@@ -2,14 +2,17 @@
 
 use alloc::{sync::Arc, task::Wake};
 use core::{
-    pin::pin,
+    fmt,
+    pin::{Pin, pin},
     sync::atomic::{AtomicBool, Ordering},
     task::{Context, Poll, Waker},
 };
 
+use axerrno::AxError;
 use kernel_guard::NoPreemptIrqSave;
+use pin_project::pin_project;
 
-use crate::{WeakAxTaskRef, current, current_run_queue, select_run_queue};
+use crate::{AxTaskRef, WeakAxTaskRef, current, current_run_queue, select_run_queue};
 
 #[cfg(feature = "irq")]
 mod time;
@@ -68,5 +71,59 @@ pub fn block_on<F: IntoFuture>(f: F) -> F::Output {
             }
             Poll::Ready(output) => break output,
         }
+    }
+}
+
+/// Error returned by [`interruptible`].
+#[derive(Debug, PartialEq, Eq)]
+pub struct Interrupted;
+
+impl fmt::Display for Interrupted {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "interrupted")
+    }
+}
+
+impl core::error::Error for Interrupted {}
+
+impl From<Interrupted> for AxError {
+    fn from(_: Interrupted) -> Self {
+        AxError::Interrupted
+    }
+}
+
+/// Future returned by [`interruptible`].
+#[must_use = "futures do nothing unless you `.await` or poll them"]
+#[pin_project]
+pub struct Interruptible<F> {
+    #[pin]
+    inner: F,
+    task: AxTaskRef,
+}
+
+impl<F> Future for Interruptible<F>
+where
+    F: Future,
+{
+    type Output = Result<F::Output, Interrupted>;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = self.project();
+
+        if this.task.interrupted() {
+            return Poll::Ready(Err(Interrupted));
+        } else {
+            this.task.on_interrupt(cx.waker());
+        }
+
+        this.inner.poll(cx).map(Ok)
+    }
+}
+
+/// Makes a future interruptible.
+pub fn interruptible<F: IntoFuture>(f: F) -> Interruptible<F::IntoFuture> {
+    Interruptible {
+        inner: f.into_future(),
+        task: current().clone(),
     }
 }

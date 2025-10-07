@@ -6,7 +6,7 @@ use core::{
     ops::Deref,
     ptr::NonNull,
     sync::atomic::{AtomicBool, AtomicI32, AtomicU8, AtomicU32, AtomicU64, Ordering},
-    task::Poll,
+    task::{Poll, Waker},
 };
 
 #[cfg(feature = "preempt")]
@@ -71,6 +71,9 @@ pub struct TaskInner {
 
     /// Mark whether the task is in the wait queue.
     in_wait_queue: AtomicBool,
+
+    interrupted: AtomicBool,
+    interrupt_waker: AtomicWaker,
 
     /// Used to indicate the CPU ID where the task is running or will run.
     cpu_id: AtomicU32,
@@ -232,6 +235,25 @@ impl TaskInner {
     pub fn set_cpumask(&self, cpumask: AxCpuMask) {
         *self.cpumask.lock() = cpumask
     }
+
+    /// Registers a waker to be woken when the task is interrupted.
+    #[inline]
+    pub fn on_interrupt(&self, waker: &Waker) {
+        self.interrupt_waker.register(waker);
+    }
+
+    /// Interrupts the task.
+    #[inline]
+    pub fn interrupt(&self) {
+        self.interrupted.store(true, Ordering::Release);
+        self.interrupt_waker.wake();
+    }
+
+    /// Returns whether the task is interrupted, and clears the interrupt state.
+    #[inline]
+    pub fn interrupted(&self) -> bool {
+        self.interrupted.swap(false, Ordering::AcqRel)
+    }
 }
 
 // private methods
@@ -247,6 +269,8 @@ impl TaskInner {
             // By default, the task is allowed to run on all CPUs.
             cpumask: SpinNoIrq::new(AxCpuMask::full()),
             in_wait_queue: AtomicBool::new(false),
+            interrupted: AtomicBool::new(false),
+            interrupt_waker: AtomicWaker::new(),
             cpu_id: AtomicU32::new(0),
             #[cfg(feature = "smp")]
             on_cpu: AtomicBool::new(false),
