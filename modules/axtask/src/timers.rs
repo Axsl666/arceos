@@ -52,6 +52,10 @@ pub(crate) fn cancel_timer(key: &TimerKey) {
     wheel.remove(key);
 }
 
+pub(crate) fn has_timer(key: &TimerKey) -> bool {
+    TIMER_WHEEL.lock().contains_key(key)
+}
+
 pub fn check_events() {
     for callback in TIMER_CALLBACKS.lock().iter() {
         callback(wall_time());

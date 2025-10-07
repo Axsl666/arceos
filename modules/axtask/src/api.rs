@@ -216,7 +216,10 @@ pub fn sleep(dur: core::time::Duration) {
 /// If the feature `irq` is not enabled, it uses busy-wait instead.
 pub fn sleep_until(deadline: axhal::time::TimeValue) {
     #[cfg(feature = "irq")]
-    current_run_queue::<NoPreemptIrqSave>().sleep_until(deadline);
+    let _ = crate::future::block_on(crate::future::timeout_at(
+        Some(deadline),
+        futures_util::future::pending::<()>(),
+    ));
     #[cfg(not(feature = "irq"))]
     axhal::time::busy_wait_until(deadline);
 }
