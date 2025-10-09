@@ -14,12 +14,23 @@ multitask = ["axtask/multitask"]
 default = []
 
 [dependencies]
+<<<<<<< HEAD
 axtask = { workspace = true }
 event-listener = { version = "5.4.0", default-features = false }
 kspin = { workspace = true }
 lock_api = { version = "0.4", default-features = false }
+=======
+axtask.workspace = true
+event-listener.workspace = true
+kspin.workspace = true
+lock_api.workspace = true
+>>>>>>> arceos-c53fb41
 
 [dev-dependencies]
 axsync = { workspace = true, features = ["multitask"] }
 axtask = { workspace = true, features = ["test"] }
+<<<<<<< HEAD
 rand = { workspace = true }
+=======
+rand.workspace = true
+>>>>>>> arceos-c53fb41

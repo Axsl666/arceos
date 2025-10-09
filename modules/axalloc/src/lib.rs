@@ -185,11 +185,15 @@ impl GlobalAllocator {
                 let mut try_size = expand_size;
                 let min_size = PAGE_SIZE.max(layout.size());
                 loop {
+<<<<<<< HEAD
                     let heap_ptr = match self.alloc_pages(
                         try_size / PAGE_SIZE,
                         PAGE_SIZE,
                         UsageKind::RustHeap,
                     ) {
+=======
+                    let heap_ptr = match self.alloc_pages(try_size / PAGE_SIZE, PAGE_SIZE) {
+>>>>>>> arceos-c53fb41
                         Ok(ptr) => ptr,
                         Err(err) => {
                             try_size /= 2;

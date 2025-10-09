@@ -29,6 +29,7 @@ SECTIONS
         __init_array_end = .;
     }
 
+<<<<<<< HEAD
     debug_abbrev : {
         . += SIZEOF(.debug_abbrev);
     }
@@ -59,6 +60,9 @@ SECTIONS
     debug_str_offsets : {
         . += SIZEOF(.debug_str_offsets);
     }
+=======
+    %DEBUG%
+>>>>>>> arceos-c53fb41
 
     . = ALIGN(4K);
     _erodata = .;
@@ -130,8 +134,11 @@ SECTIONS {
     linkm2_IRQ : { *(linkm2_IRQ) }
     linkme_PAGE_FAULT : { *(linkme_PAGE_FAULT) }
     linkm2_PAGE_FAULT : { *(linkm2_PAGE_FAULT) }
+<<<<<<< HEAD
     linkme_SYSCALL : { *(linkme_SYSCALL) }
     linkm2_SYSCALL : { *(linkm2_SYSCALL) }
+=======
+>>>>>>> arceos-c53fb41
     scope_local : { *(scope_local) }
 }
 INSERT AFTER .tbss;

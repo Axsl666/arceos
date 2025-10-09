@@ -1,3 +1,13 @@
+<<<<<<< HEAD
+=======
+use alloc::collections::VecDeque;
+use alloc::sync::Arc;
+use core::{
+    mem::MaybeUninit,
+    task::{Context, Poll},
+};
+
+>>>>>>> arceos-c53fb41
 #[cfg(feature = "smp")]
 use alloc::sync::Weak;
 use alloc::{collections::VecDeque, sync::Arc};
@@ -5,11 +15,20 @@ use core::{mem::MaybeUninit, task::Poll};
 
 use axhal::percpu::this_cpu_id;
 use axsched::BaseScheduler;
+<<<<<<< HEAD
 use futures::{future::poll_fn, task::AtomicWaker};
+=======
+use futures_util::{future::poll_fn, task::AtomicWaker};
+>>>>>>> arceos-c53fb41
 use kernel_guard::BaseGuard;
 use kspin::SpinRaw;
 use lazyinit::LazyInit;
 
+<<<<<<< HEAD
+=======
+use axhal::percpu::this_cpu_id;
+
+>>>>>>> arceos-c53fb41
 use crate::{
     AxCpuMask, AxTaskRef, Scheduler, TaskInner,
     future::block_on,
@@ -301,7 +320,7 @@ impl<G: BaseGuard> CurrentRunQueueRef<'_, G> {
         assert!(curr.is_running());
 
         self.inner
-            .put_task_with_state(curr.clone(), TaskState::Running, false);
+            .put_task_with_state((*curr).clone(), TaskState::Running, false);
 
         self.inner.resched();
     }
@@ -361,7 +380,7 @@ impl<G: BaseGuard> CurrentRunQueueRef<'_, G> {
         );
         if can_preempt {
             self.inner
-                .put_task_with_state(curr.clone(), TaskState::Running, true);
+                .put_task_with_state((*curr).clone(), TaskState::Running, true);
             self.inner.resched();
         } else {
             curr.set_preempt_pending(true);
@@ -384,6 +403,7 @@ impl<G: BaseGuard> CurrentRunQueueRef<'_, G> {
             }
             axhal::power::system_off();
         } else {
+<<<<<<< HEAD
             curr.exit(exit_code);
 
             // Safety: it is called from
@@ -393,6 +413,18 @@ impl<G: BaseGuard> CurrentRunQueueRef<'_, G> {
                 // Push current task to the `EXITED_TASKS` list, which will be consumed by the
                 // GC task.
                 EXITED_TASKS.current_ref_mut_raw().push_back(curr.clone());
+=======
+            // Notify the joiner task.
+            curr.notify_exit(exit_code);
+
+            // Safety: it is called from `current_run_queue::<NoPreemptIrqSave>().exit_current(exit_code)`,
+            // which disabled IRQs and preemption.
+            unsafe {
+                // Push current task to the `EXITED_TASKS` list, which will be consumed by the GC task.
+                EXITED_TASKS
+                    .current_ref_mut_raw()
+                    .push_back((*curr).clone());
+>>>>>>> arceos-c53fb41
                 // Wake up the GC task to drop the exited tasks.
                 WAIT_FOR_EXIT.current_ref_mut_raw().wake();
             }
@@ -407,28 +439,41 @@ impl<G: BaseGuard> CurrentRunQueueRef<'_, G> {
     /// reschedule. Mark the state of current task as `Blocked`, set the
     /// `in_wait_queue` flag as true. Note:
     ///     1. The caller must hold the lock of the wait queue.
+<<<<<<< HEAD
     ///     2. The caller must ensure that the current task is in the running
     ///        state.
     ///     3. The caller must ensure that the current task is not the idle
     ///        task.
     ///     4. The lock of the wait queue will be released explicitly after
     ///        current task is pushed into it.
+=======
+    ///     2. The caller must ensure that the current task is in the running state.
+    ///     3. The caller must ensure that the current task is not the idle task.
+    ///     4. The lock of the wait queue will be released explicitly after current task is pushed into it.
+>>>>>>> arceos-c53fb41
     pub fn blocked_resched(&mut self, before_block: impl FnOnce(AxTaskRef)) {
         let curr = &self.current_task;
         assert!(curr.is_running());
         assert!(!curr.is_idle());
+<<<<<<< HEAD
 
         // we must not block current task with preemption disabled.
         // Current expected preempt count is 2.
         // 1 for `NoPreemptIrqSave`, 1 for wait queue's `SpinNoIrq`.
         // #[cfg(feature = "preempt")]
         // assert!(curr.can_preempt(2));
+=======
+>>>>>>> arceos-c53fb41
 
         // Mark the task as blocked, this has to be done before adding it to the wait
         // queue while holding the lock of the wait queue.
         curr.set_state(TaskState::Blocked);
 
+<<<<<<< HEAD
         before_block(curr.clone());
+=======
+        before_block((*curr).clone());
+>>>>>>> arceos-c53fb41
 
         // Current task's state has been changed to `Blocked` and added to the wait
         // queue. Note that the state may have been set as `Ready` in
@@ -458,7 +503,11 @@ impl AxRunQueue {
     /// The run queue is initialized with a per-CPU gc task in its scheduler.
     fn new(cpu_id: usize) -> Self {
         let gc_task = TaskInner::new(
+<<<<<<< HEAD
             || block_on(gc_entry()),
+=======
+            || block_on(poll_fn(poll_gc)),
+>>>>>>> arceos-c53fb41
             "gc".into(),
             axconfig::TASK_STACK_SIZE,
         )
@@ -603,6 +652,7 @@ impl AxRunQueue {
     }
 }
 
+<<<<<<< HEAD
 async fn gc_entry() -> ! {
     poll_fn(|cx| {
         loop {
@@ -623,6 +673,27 @@ async fn gc_entry() -> ! {
                             EXITED_TASKS.with_current(|exited_tasks| exited_tasks.push_back(task));
                         }
                     }
+=======
+fn poll_gc(cx: &mut Context<'_>) -> Poll<()> {
+    loop {
+        // Drop all exited tasks and recycle resources.
+        let n = EXITED_TASKS.with_current(|exited_tasks| exited_tasks.len());
+        for _ in 0..n {
+            // Do not do the slow drops in the critical section.
+            let Some(task) = EXITED_TASKS.with_current(|exited_tasks| exited_tasks.pop_front())
+            else {
+                continue;
+            };
+            match Arc::try_unwrap(task) {
+                Ok(task) => {
+                    // If I'm the last holder of the task, drop it immediately.
+                    drop(task);
+                }
+                Err(task) => {
+                    // Otherwise (e.g, `switch_to` is not compeleted, held by the
+                    // joiner, etc), push it back and wait for them to drop first.
+                    EXITED_TASKS.with_current(|exited_tasks| exited_tasks.push_back(task));
+>>>>>>> arceos-c53fb41
                 }
             }
             unsafe { WAIT_FOR_EXIT.current_ref_raw() }.register(cx.waker());
@@ -635,9 +706,27 @@ async fn gc_entry() -> ! {
 
             crate::yield_now();
         }
+<<<<<<< HEAD
         Poll::Pending
     })
     .await
+=======
+        // Note: we cannot block current task with preemption disabled,
+        // use `current_ref_raw` to get the `WAIT_FOR_EXIT`'s reference here to avoid the use of `NoPreemptGuard`.
+        // Since gc task is pinned to the current CPU, there is no affection if the gc task is preempted during the process.
+        unsafe { WAIT_FOR_EXIT.current_ref_raw() }.register(cx.waker());
+
+        // New tasks might be added during the above section, recheck it to
+        // prevent us from sleeping indefinitely.
+        if EXITED_TASKS.with_current(|exited_tasks| exited_tasks.is_empty()) {
+            break;
+        }
+
+        crate::yield_now();
+    }
+
+    Poll::Pending
+>>>>>>> arceos-c53fb41
 }
 
 /// The task routine for migrating the current task to the correct CPU.

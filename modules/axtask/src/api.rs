@@ -8,11 +8,28 @@ use alloc::{
 use kernel_guard::NoPreemptIrqSave;
 
 pub(crate) use crate::run_queue::{current_run_queue, select_run_queue};
+<<<<<<< HEAD
 pub use crate::task::{CurrentTask, TaskId, TaskInner, TaskState};
 #[cfg(feature = "task-ext")]
 pub use crate::task::{TaskExt, TaskExtProxy};
 #[cfg(feature = "irq")]
 pub use crate::timers::register_timer_callback;
+=======
+
+#[doc(cfg(all(feature = "multitask", feature = "task-ext")))]
+#[cfg(feature = "task-ext")]
+pub use crate::task::{AxTaskExt, TaskExt};
+
+#[doc(cfg(all(feature = "multitask", feature = "irq")))]
+#[cfg(feature = "irq")]
+pub use crate::timers::register_timer_callback;
+
+#[doc(cfg(feature = "multitask"))]
+pub use crate::{
+    task::{CurrentTask, TaskId, TaskInner, TaskState},
+    wait_queue::WaitQueue,
+};
+>>>>>>> arceos-c53fb41
 
 /// The reference type of a task.
 pub type AxTaskRef = Arc<AxTask>;
@@ -116,6 +133,16 @@ where
     spawn_task(TaskInner::new(f, name, stack_size))
 }
 
+/// Spawns a new task with the given name and the default stack size ([`axconfig::TASK_STACK_SIZE`]).
+///
+/// Returns the task reference.
+pub fn spawn_with_name<F>(f: F, name: String) -> AxTaskRef
+where
+    F: FnOnce() + Send + 'static,
+{
+    spawn_raw(f, name, axconfig::TASK_STACK_SIZE)
+}
+
 /// Spawns a new task with the default parameters.
 ///
 /// The default task name is an empty string. The default task stack size is
@@ -126,7 +153,11 @@ pub fn spawn<F>(f: F, name: String) -> AxTaskRef
 where
     F: FnOnce() + Send + 'static,
 {
+<<<<<<< HEAD
     spawn_raw(f, name, axconfig::TASK_STACK_SIZE)
+=======
+    spawn_with_name(f, String::new())
+>>>>>>> arceos-c53fb41
 }
 
 /// Set the priority for current task.
@@ -185,6 +216,29 @@ pub fn yield_now() {
     current_run_queue::<NoPreemptIrqSave>().yield_current()
 }
 
+<<<<<<< HEAD
+=======
+/// Current task is going to sleep for the given duration.
+///
+/// If the feature `irq` is not enabled, it uses busy-wait instead.
+pub fn sleep(dur: core::time::Duration) {
+    sleep_until(axhal::time::wall_time() + dur);
+}
+
+/// Current task is going to sleep, it will be woken up at the given deadline.
+///
+/// If the feature `irq` is not enabled, it uses busy-wait instead.
+pub fn sleep_until(deadline: axhal::time::TimeValue) {
+    #[cfg(feature = "irq")]
+    let _ = crate::future::block_on(crate::future::timeout_at(
+        Some(deadline),
+        futures_util::future::pending::<()>(),
+    ));
+    #[cfg(not(feature = "irq"))]
+    axhal::time::busy_wait_until(deadline);
+}
+
+>>>>>>> arceos-c53fb41
 /// Exits the current task.
 pub fn exit(exit_code: i32) -> ! {
     current_run_queue::<NoPreemptIrqSave>().exit_current(exit_code)

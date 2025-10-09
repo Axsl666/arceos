@@ -85,6 +85,7 @@ log-level-debug = ["axlog/log-level-debug"]
 log-level-trace = ["axlog/log-level-trace"]
 
 # Backtrace
+<<<<<<< HEAD
 backtrace = ["axbacktrace/dwarf"]
 
 [dependencies]
@@ -101,4 +102,21 @@ axsync = { workspace = true, optional = true }
 axtask = { workspace = true, optional = true }
 axipi = { workspace = true, optional = true }
 
+=======
+backtrace = ["alloc", "axbacktrace/dwarf"]
+
+[dependencies]
+axalloc = { workspace = true, optional = true }
+axbacktrace.workspace = true
+axdisplay = { workspace = true, optional = true }
+axdriver = { workspace = true, optional = true }
+axfs = { workspace = true, optional = true }
+axhal.workspace = true
+axipi = { workspace = true, optional = true }
+axlog.workspace = true
+axnet = { workspace = true, optional = true }
+axruntime.workspace = true
+axsync = { workspace = true, optional = true }
+axtask = { workspace = true, optional = true }
+>>>>>>> arceos-c53fb41
 kspin = { workspace = true, optional = true }

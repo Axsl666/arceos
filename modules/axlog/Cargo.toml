@@ -20,11 +20,19 @@ log-level-trace = ["log/max_level_trace"]
 default = []
 
 [dependencies]
+<<<<<<< HEAD
 cfg-if = { workspace = true }
 chrono = { workspace = true, optional = true }
 crate_interface = { workspace = true }
 kspin = { workspace = true }
 log = { workspace = true }
+=======
+cfg-if.workspace = true
+chrono = { workspace = true, default-features = true, optional = true }
+crate_interface.workspace = true
+kspin.workspace = true
+log.workspace = true
+>>>>>>> arceos-c53fb41
 
 [dev-dependencies]
 axlog = { workspace = true, features = ["std"] }

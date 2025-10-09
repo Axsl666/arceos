@@ -17,16 +17,24 @@ multitask = [
     "dep:axsched",
     "dep:cpumask",
     "dep:crate_interface",
+<<<<<<< HEAD
     "dep:foldhash",
     "dep:futures",
+=======
+    "dep:futures-util",
+>>>>>>> arceos-c53fb41
     "dep:kernel_guard",
     "dep:kspin",
     "dep:lazyinit",
     "dep:memory_addr",
     "dep:percpu",
     "dep:pin-project",
+<<<<<<< HEAD
     "dep:priority-queue",
     "dep:spin",
+=======
+    "dep:weak-map",
+>>>>>>> arceos-c53fb41
 ]
 task-ext = ["dep:extern-trait"]
 irq = []
@@ -42,6 +50,7 @@ test = ["percpu?/sp-naive"]
 
 [dependencies]
 axconfig = { workspace = true, optional = true }
+<<<<<<< HEAD
 axerrno = { workspace = true }
 axio = { workspace = true }
 axhal = { workspace = true }
@@ -64,6 +73,29 @@ priority-queue = { version = "2.5", default-features = false, optional = true }
 spin = { workspace = true, optional = true }
 
 [dev-dependencies]
+=======
+axerrno.workspace = true
+axhal.workspace = true
+axsched = { git = "https://github.com/Starry-OS/axsched.git", rev = "2076c9b", optional = true }
+cfg-if.workspace = true
+cpumask = { version = "0.1", optional = true }
+crate_interface = { workspace = true, optional = true }
+extern-trait = { version = "0.2", optional = true }
+futures-util = { version = "0.3", default-features = false, optional = true, features = [
+    "alloc",
+] }
+kernel_guard = { workspace = true, optional = true }
+kspin = { workspace = true, optional = true }
+lazyinit = { workspace = true, optional = true }
+log.workspace = true
+memory_addr = { workspace = true, optional = true }
+percpu = { workspace = true, optional = true }
+pin-project = { version = "1.1", optional = true }
+weak-map = { version = "0.1", optional = true }
+
+[dev-dependencies]
+rand.workspace = true
+>>>>>>> arceos-c53fb41
 axhal = { workspace = true, features = ["fp-simd"] }
 axtask = { workspace = true, features = ["test", "multitask"] }
 rand = { workspace = true }

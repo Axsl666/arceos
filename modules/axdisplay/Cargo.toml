@@ -11,7 +11,14 @@ documentation = "https://arceos-org.github.io/arceos/axdisplay/index.html"
 
 [dependencies]
 axdriver = { workspace = true, features = ["display"] }
+<<<<<<< HEAD
 axsync = { workspace = true }
 
 lazyinit = { workspace = true }
 log = { workspace = true }
+=======
+axdriver_display.workspace = true
+axsync.workspace = true
+lazyinit.workspace = true
+log.workspace = true
+>>>>>>> arceos-c53fb41

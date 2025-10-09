@@ -91,14 +91,21 @@ pub mod trap {
 /// There are three types of context:
 ///
 /// - [`TaskContext`][axcpu::TaskContext]: The context of a task.
+<<<<<<< HEAD
 /// - [`TrapFrame`][axcpu::TrapFrame]: The context of an interrupt or an
 ///   exception.
 /// - [`UserContext`][axcpu::uspace::UserContext]: The context for user mode.
+=======
+/// - [`TrapFrame`][axcpu::TrapFrame]: The context of an interrupt or an exception.
+>>>>>>> arceos-c53fb41
 pub mod context {
     pub use axcpu::{TaskContext, TrapFrame};
 }
 
+<<<<<<< HEAD
 /// User mode support.
+=======
+>>>>>>> arceos-c53fb41
 #[cfg(feature = "uspace")]
 pub use axcpu::uspace;
 

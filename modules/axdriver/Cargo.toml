@@ -16,13 +16,19 @@ documentation = "https://arceos-org.github.io/arceos/axdriver/index.html"
 dyn = []
 bus-mmio = []
 bus-pci = ["dep:axdriver_pci", "dep:axhal", "dep:axconfig"]
+<<<<<<< HEAD
 block = ["axdriver_block"]
 display = ["axdriver_display"]
 input = ["axdriver_input"]
 net = ["axdriver_net"]
+=======
+net = ["dep:axdriver_net"]
+block = ["dep:axdriver_block"]
+display = ["dep:axdriver_display"]
+>>>>>>> arceos-c53fb41
 
 # Enabled by features `virtio-*`
-virtio = ["axdriver_virtio", "dep:axalloc", "dep:axhal", "dep:axconfig"]
+virtio = ["dep:axdriver_virtio", "dep:axalloc", "dep:axhal", "dep:axconfig"]
 
 # various types of drivers
 virtio-blk = ["block", "virtio", "axdriver_virtio/block"]
@@ -48,6 +54,7 @@ fxmac = ["net", "axdriver_net/fxmac", "dep:axalloc", "dep:axhal", "dep:axdma"]
 axalloc = { workspace = true, optional = true }
 axconfig = { workspace = true, optional = true }
 axdma = { workspace = true, optional = true }
+<<<<<<< HEAD
 axhal = { workspace = true, optional = true }
 
 axdriver_base = { git = "https://github.com/Starry-OS/axdriver_crates.git", rev = "6ddb55b" }
@@ -62,3 +69,15 @@ crate_interface = { workspace = true }
 log = { workspace = true }
 ahci_driver = { git = "https://github.com/Starry-OS/ahci_driver.git", rev = "beaa9c8", optional = true }
 printf-compat = { git = "https://github.com/lights0123/printf-compat.git", rev = "5f5c9cc", default-features = false, optional = true }
+=======
+
+axdriver_base.workspace = true
+axdriver_block = { workspace = true, optional = true }
+axdriver_display = { workspace = true, optional = true }
+axdriver_net = { workspace = true, optional = true }
+axdriver_pci = { workspace = true, optional = true }
+axdriver_virtio = { workspace = true, optional = true }
+cfg-if.workspace = true
+crate_interface.workspace = true
+log.workspace = true
+>>>>>>> arceos-c53fb41

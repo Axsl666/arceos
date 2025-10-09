@@ -19,6 +19,20 @@ members = [
     "modules/axipi",
 
     "api/axfeat",
+<<<<<<< HEAD
+=======
+    "api/arceos_api",
+    "api/arceos_posix_api",
+
+    "ulib/axstd",
+    "ulib/axlibc",
+
+    "examples/helloworld",
+    "examples/helloworld-myplat",
+    "examples/httpclient",
+    "examples/httpserver",
+    "examples/shell",
+>>>>>>> arceos-c53fb41
 ]
 
 [workspace.package]
@@ -58,15 +72,27 @@ axipi = { path = "modules/axipi" }
 
 allocator = { git = "https://github.com/Starry-OS/allocator.git", rev = "d5feebd" }
 axbacktrace = "0.1"
+<<<<<<< HEAD
 axcpu = "0.2"
 axerrno = "0.1"
 axfs-ng-vfs = { git = "https://github.com/Starry-OS/axfs-ng-vfs.git", rev = "e3e83d6" }
 axio = "0.1"
 axplat = "0.2"
+=======
+axdriver_base = { git = "https://github.com/arceos-org/axdriver_crates.git", tag = "v0.1.2" }
+axdriver_block = { git = "https://github.com/arceos-org/axdriver_crates.git", tag = "v0.1.2" }
+axdriver_display = { git = "https://github.com/arceos-org/axdriver_crates.git", tag = "v0.1.2" }
+axdriver_net = { git = "https://github.com/arceos-org/axdriver_crates.git", tag = "v0.1.2" }
+axdriver_pci = { git = "https://github.com/arceos-org/axdriver_crates.git", tag = "v0.1.2" }
+axdriver_virtio = { git = "https://github.com/arceos-org/axdriver_crates.git", tag = "v0.1.2" }
+axerrno = "0.1"
+axio = "0.1"
+>>>>>>> arceos-c53fb41
 bindgen = "0.72"
 cfg-if = "1.0"
 chrono = { version = "0.4", default-features = false }
 crate_interface = "0.1.4"
+<<<<<<< HEAD
 enum_dispatch = "0.3.13"
 futures = { version = "0.3.31", default-features = false, features = ["alloc"] }
 hashbrown = "0.15.4"
@@ -74,21 +100,39 @@ kernel_guard = "0.1"
 kspin = "0.1"
 lazy_static = { version = "1.5", features = ["spin_no_std"] }
 lazyinit = "0.2"
+=======
+ctor_bare = "0.2"
+event-listener = { version = "5.4", default-features = false }
+kernel_guard = "0.1"
+kspin = "0.1"
+lazyinit = "0.2"
+lazy_static = { version = "1.5", features = ["spin_no_std"] }
+>>>>>>> arceos-c53fb41
 lock_api = { version = "0.4", default-features = false }
 log = "=0.4.21"
 memory_addr = "0.4"
 memory_set = "0.4"
+<<<<<<< HEAD
 page_table_entry = "0.5"
 page_table_multiarch = "0.5"
+=======
+>>>>>>> arceos-c53fb41
 percpu = "0.2"
 rand = "0.9"
 scope-local = "0.1"
 spin = "0.10"
 
 [patch.crates-io]
+<<<<<<< HEAD
 axbacktrace = { git = "https://github.com/Starry-OS/axbacktrace.git", rev = "322f6da" }
 axcpu = { git = "https://github.com/Starry-OS/axcpu.git", rev = "f046e84" }
 axerrno = { git = "https://github.com/Starry-OS/axerrno.git", rev = "58be232" }
 axio = { git = "https://github.com/Starry-OS/axio.git", rev = "e11ca75" }
 page_table_entry = { git = "https://github.com/Starry-OS/page_table_multiarch.git", rev = "3f697c8" }
 page_table_multiarch = { git = "https://github.com/Starry-OS/page_table_multiarch.git", rev = "3f697c8" }
+=======
+axbacktrace = { git = "https://github.com/Starry-OS/axbacktrace.git" }
+axcpu = { git = "https://github.com/Starry-OS/axcpu.git" }
+axerrno = { git = "https://github.com/Starry-OS/axerrno.git" }
+axplat-loongarch64-qemu-virt = { git = "https://github.com/Starry-OS/axplat_crates.git", branch = "feat/la64-dmw" }
+>>>>>>> arceos-c53fb41

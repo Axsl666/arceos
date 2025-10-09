@@ -11,6 +11,7 @@ repository = "https://github.com/arceos-org/arceos/tree/main/modules/axdma"
 documentation = "https://arceos-org.github.io/arceos/axdma/index.html"
 
 [dependencies]
+<<<<<<< HEAD
 axalloc = { workspace = true }
 axconfig = { workspace = true }
 axhal = { workspace = true, features = ["paging"] }
@@ -20,3 +21,14 @@ axerrno = { workspace = true }
 kspin = { workspace = true }
 log = { workspace = true }
 memory_addr = { workspace = true }
+=======
+allocator.workspace = true
+axalloc.workspace = true
+axconfig.workspace = true
+axerrno.workspace = true
+axhal = { workspace = true, features = ["paging"] }
+axmm.workspace = true
+kspin.workspace = true
+log.workspace = true
+memory_addr.workspace = true
+>>>>>>> arceos-c53fb41

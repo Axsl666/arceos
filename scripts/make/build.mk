@@ -40,6 +40,9 @@ else ifneq ($(filter $(or $(MAKECMDGOALS), $(.DEFAULT_GOAL)), all build run just
       RUSTFLAGS += -C target-feature=-ual
     endif
   endif
+  ifeq ($(BACKTRACE), y)
+    RUSTFLAGS += -C force-frame-pointers -C debuginfo=2 -C strip=none
+  endif
   $(if $(V), $(info RUSTFLAGS: "$(RUSTFLAGS)"))
   export RUSTFLAGS
   ifeq ($(LTO), y)
@@ -63,8 +66,18 @@ endif
 $(OUT_DIR):
 	$(call run_cmd,mkdir,-p $@)
 
+<<<<<<< HEAD
 $(OUT_BIN): _cargo_build $(OUT_ELF)
 	$(call run_cmd,$(OBJCOPY),$(OUT_ELF) -O binary --strip-all $@)
+=======
+_dwarf: $(OUT_ELF)
+ifeq ($(BACKTRACE), y)
+	$(call run_cmd,./scripts/make/dwarf.sh,$(OUT_ELF) $(OBJCOPY))
+endif
+
+$(OUT_BIN): _cargo_build $(OUT_ELF) _dwarf
+	$(call run_cmd,$(OBJCOPY),$(OUT_ELF) --strip-all -O binary $@)
+>>>>>>> arceos-c53fb41
 	@if [ ! -s $(OUT_BIN) ]; then \
 		echo 'Empty kernel image "$(notdir $(FINAL_IMG))" is built, please check your build configuration'; \
 		exit 1; \
@@ -84,4 +97,4 @@ $(OUT_UIMG): $(OUT_BIN)
 		-a $(subst _,,$(shell axconfig-gen "$(OUT_CONFIG)" -r plat.kernel-base-paddr)) \
 		-d $(OUT_BIN) $@)
 
-.PHONY: _cargo_build
+.PHONY: _cargo_build _dwarf

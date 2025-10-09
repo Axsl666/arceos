@@ -63,10 +63,15 @@ ifeq ($(BACKTRACE),y)
   ax_feat += backtrace
 endif
 
+<<<<<<< HEAD
 ifneq ($(SMP),)
   ifneq ($(SMP),1)
     lib_feat += smp
   endif
+=======
+ifeq ($(shell test $(SMP) -gt 1; echo $$?),0)
+  lib_feat += smp
+>>>>>>> arceos-c53fb41
 endif
 
 ax_feat += $(filter-out $(lib_features),$(FEATURES))

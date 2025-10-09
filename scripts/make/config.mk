@@ -6,6 +6,7 @@ config_args := \
   -w 'platform="$(PLAT_NAME)"' \
   -o "$(OUT_CONFIG)"
 
+<<<<<<< HEAD
 ifeq ($(MYPLAT),)
   # Only change these options if targeting QEMU
   config_args += -w 'plat.phys-memory-size=$(shell numfmt --from=iec $(MEM))'
@@ -13,6 +14,20 @@ ifeq ($(MYPLAT),)
     config_args += -w 'plat.cpu-num=$(SMP)'
   else
     SMP := $(shell axconfig-gen $(PLAT_CONFIG) -r plat.cpu-num 2>/dev/null)
+=======
+ifneq ($(MEM),)
+  config_args += -w 'plat.phys-memory-size=$(shell ./scripts/make/strtosz.py $(MEM))'
+else
+  MEM := $(shell axconfig-gen $(PLAT_CONFIG) -r plat.phys-memory-size 2>/dev/null | tr -d _ | xargs printf "%dB")
+endif
+
+ifneq ($(SMP),)
+  config_args += -w 'plat.cpu-num=$(SMP)'
+else
+  SMP := $(shell axconfig-gen $(PLAT_CONFIG) -r plat.cpu-num 2>/dev/null)
+  ifeq ($(SMP),)
+    $(error "`plat.cpu-num` is not defined in the platform configuration file")
+>>>>>>> arceos-c53fb41
   endif
 endif
 

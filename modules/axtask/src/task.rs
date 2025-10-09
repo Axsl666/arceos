@@ -1,11 +1,17 @@
 use alloc::{boxed::Box, string::String, sync::Arc};
+<<<<<<< HEAD
 #[cfg(feature = "preempt")]
 use core::sync::atomic::AtomicUsize;
+=======
+>>>>>>> arceos-c53fb41
 use core::{
     alloc::Layout,
     cell::{Cell, UnsafeCell},
     fmt,
+<<<<<<< HEAD
     future::poll_fn,
+=======
+>>>>>>> arceos-c53fb41
     ops::Deref,
     ptr::NonNull,
     sync::atomic::{AtomicBool, AtomicI32, AtomicU8, AtomicU32, AtomicU64, Ordering},
@@ -58,6 +64,21 @@ pub unsafe trait TaskExt {
     fn on_leave(&self) {}
 }
 
+/// User-defined task extended data.
+/// # Safety
+/// See [`extern_trait`].
+#[cfg(feature = "task-ext")]
+#[extern_trait::extern_trait(
+    /// The impl proxy type for [`TaskExt`].
+    pub AxTaskExt
+)]
+pub unsafe trait TaskExt {
+    /// Called when the task is switched in.
+    fn on_enter(&self) {}
+    /// Called when the task is switched out.
+    fn on_leave(&self) {}
+}
+
 /// The inner task structure.
 pub struct TaskInner {
     id: TaskId,
@@ -95,7 +116,11 @@ pub struct TaskInner {
     ctx: UnsafeCell<TaskContext>,
 
     #[cfg(feature = "task-ext")]
+<<<<<<< HEAD
     task_ext: Option<TaskExtProxy>,
+=======
+    task_ext: Option<AxTaskExt>,
+>>>>>>> arceos-c53fb41
 
     #[cfg(feature = "tls")]
     tls: TlsArea,
@@ -176,12 +201,20 @@ impl TaskInner {
 
     /// Wait for the task to exit, and return the exit code.
     ///
+<<<<<<< HEAD
     /// It will return immediately if the task has already exited (but not
     /// dropped).
     pub fn join(&self) -> i32 {
         block_on(poll_fn(|cx| {
             if self.state() == TaskState::Exited {
                 return Poll::Ready(self.exit_code.load(Ordering::Acquire));
+=======
+    /// It will return immediately if the task has already exited (but not dropped).
+    pub fn join(&self) -> Option<i32> {
+        block_on(poll_fn(|cx| {
+            if self.state() == TaskState::Exited {
+                return Poll::Ready(Some(self.exit_code.load(Ordering::Acquire)));
+>>>>>>> arceos-c53fb41
             }
             self.wait_for_exit.register(cx.waker());
             Poll::Pending
@@ -190,13 +223,21 @@ impl TaskInner {
 
     /// Returns a reference to the task extended data.
     #[cfg(feature = "task-ext")]
+<<<<<<< HEAD
     pub fn task_ext(&self) -> Option<&TaskExtProxy> {
+=======
+    pub fn task_ext(&self) -> Option<&AxTaskExt> {
+>>>>>>> arceos-c53fb41
         self.task_ext.as_ref()
     }
 
     /// Returns a mutable reference to the task extended data.
     #[cfg(feature = "task-ext")]
+<<<<<<< HEAD
     pub fn task_ext_mut(&mut self) -> &mut Option<TaskExtProxy> {
+=======
+    pub fn task_ext_mut(&mut self) -> &mut Option<AxTaskExt> {
+>>>>>>> arceos-c53fb41
         &mut self.task_ext
     }
 
@@ -317,6 +358,7 @@ impl TaskInner {
         Arc::new(AxTask::new(self))
     }
 
+    /// Returns the current state of the task.
     #[inline]
     pub fn state(&self) -> TaskState {
         self.state.load(Ordering::Acquire).into()
@@ -372,6 +414,7 @@ impl TaskInner {
         self.interrupt_waker.wake();
     }
 
+<<<<<<< HEAD
     /// Fetches the last interruption state.
     ///
     /// Returns `None` if the task has not been interrupted, and `Some(restart)`
@@ -387,6 +430,8 @@ impl TaskInner {
         }
     }
 
+=======
+>>>>>>> arceos-c53fb41
     #[inline]
     #[cfg(feature = "preempt")]
     pub(crate) fn set_preempt_pending(&self, pending: bool) {
@@ -429,7 +474,11 @@ impl TaskInner {
     }
 
     /// Notify all tasks that join on this task.
+<<<<<<< HEAD
     pub(crate) fn exit(&self, exit_code: i32) {
+=======
+    pub(crate) fn notify_exit(&self, exit_code: i32) {
+>>>>>>> arceos-c53fb41
         self.set_state(TaskState::Exited);
         self.exit_code.store(exit_code, Ordering::Release);
         self.wait_for_exit.wake();
@@ -530,10 +579,14 @@ impl CurrentTask {
         Self::try_get().expect("current task is uninitialized")
     }
 
+<<<<<<< HEAD
     pub fn clone(&self) -> AxTaskRef {
         self.0.deref().clone()
     }
 
+=======
+    /// Returns `true` if the current task is the same as `other`.
+>>>>>>> arceos-c53fb41
     pub fn ptr_eq(&self, other: &AxTaskRef) -> bool {
         Arc::ptr_eq(&self.0, other)
     }
@@ -564,7 +617,7 @@ impl Deref for CurrentTask {
     type Target = AxTaskRef;
 
     fn deref(&self) -> &Self::Target {
-        self.0.deref()
+        &self.0
     }
 }
 

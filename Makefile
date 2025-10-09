@@ -42,6 +42,10 @@ MODE ?= release
 LOG ?= warn
 BACKTRACE ?= n
 V ?=
+<<<<<<< HEAD
+=======
+BACKTRACE ?= n
+>>>>>>> arceos-c53fb41
 LTO ?=
 TARGET_DIR ?= $(PWD)/target
 EXTRA_CONFIG ?=
@@ -62,7 +66,7 @@ GRAPHIC ?= n
 INPUT ?= n
 DEBUG ?= n
 BUS ?= pci
-MEM ?= 128M
+MEM ?=
 ACCEL ?=
 QEMU_ARGS ?=
 
@@ -143,6 +147,10 @@ LD := rust-lld -flavor gnu
 
 OBJDUMP ?= rust-objdump -d --print-imm-hex --x86-asm-syntax=intel
 OBJCOPY ?= rust-objcopy --binary-architecture=$(ARCH)
+<<<<<<< HEAD
+=======
+GDB ?= gdb
+>>>>>>> arceos-c53fb41
 
 # Paths
 OUT_DIR ?= $(APP)
@@ -185,6 +193,17 @@ run: build justrun
 justrun:
 	$(call run_qemu)
 
+<<<<<<< HEAD
+=======
+debug: build
+	$(call run_qemu_debug) &
+	$(GDB) $(OUT_ELF) \
+	  -ex 'target remote localhost:1234' \
+	  -ex 'b __axplat_main' \
+	  -ex 'continue' \
+	  -ex 'disp /16i $$pc'
+
+>>>>>>> arceos-c53fb41
 clippy:
 ifeq ($(origin ARCH), command line)
 	$(call cargo_clippy,--target $(TARGET))

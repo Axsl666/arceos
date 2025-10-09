@@ -13,10 +13,11 @@ repository = "https://github.com/arceos-org/arceos/tree/main/modules/axnet"
 documentation = "https://arceos-org.github.io/arceos/axnet/index.html"
 
 [features]
-smoltcp = []
+smoltcp = ["dep:smoltcp"]
 default = ["smoltcp"]
 
 [dependencies]
+<<<<<<< HEAD
 axconfig = { workspace = true }
 axdriver = { workspace = true, features = ["net"] }
 axhal = { workspace = true }
@@ -39,11 +40,25 @@ ringbuf = { version = "0.4.8", default-features = false, features = ["alloc"] }
 async-channel = { version = "2.5.0", default-features = false }
 event-listener = { version = "5.4.0", default-features = false }
 async-trait = "0.1.88"
+=======
+axdriver = { workspace = true, features = ["net"] }
+axdriver_net = { git = "https://github.com/arceos-org/axdriver_crates.git", tag = "v0.1.2" }
+axerrno.workspace = true
+axhal.workspace = true
+axio.workspace = true
+axsync.workspace = true
+axtask.workspace = true
+cfg-if.workspace = true
+lazyinit.workspace = true
+log.workspace = true
+spin.workspace = true
+>>>>>>> arceos-c53fb41
 
 [dependencies.smoltcp]
 git = "https://github.com/Starry-OS/smoltcp.git"
 rev = "7401a54"
 default-features = false
+optional = true
 features = [
   "alloc",
   "log",             # no std
